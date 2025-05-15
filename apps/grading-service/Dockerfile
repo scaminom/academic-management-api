@@ -6,11 +6,11 @@ RUN pnpm install
 
 FROM base AS development
 COPY . .
-CMD ["pnpm", "run", "start:dev", "grading-serivice"]
+CMD ["pnpm", "run", "start:dev", "grading-service"]
 
 FROM base AS build
 COPY . .
-RUN pnpm run build grading-serivice
+RUN pnpm run build grading-service
 
 FROM node:20-alpine AS production
 WORKDIR /app

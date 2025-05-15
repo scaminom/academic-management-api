@@ -6,11 +6,11 @@ RUN pnpm install
 
 FROM base AS development
 COPY . .
-CMD ["pnpm", "run", "start:dev", "notification-serivice"]
+CMD ["pnpm", "run", "start:dev", "notification-service"]
 
 FROM base AS build
 COPY . .
-RUN pnpm run build notification-serivice
+RUN pnpm run build notification-service
 
 FROM node:20-alpine AS production
 WORKDIR /app

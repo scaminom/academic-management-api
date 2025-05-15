@@ -6,11 +6,11 @@ RUN pnpm install
 
 FROM base AS development
 COPY . .
-CMD ["pnpm", "run", "start:dev", "teacher-serivice"]
+CMD ["pnpm", "run", "start:dev", "teacher-service"]
 
 FROM base AS build
 COPY . .
-RUN pnpm run build teacher-serivice
+RUN pnpm run build teacher-service
 
 FROM node:20-alpine AS production
 WORKDIR /app
