@@ -1,0 +1,258 @@
+version: "3"
+services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+      target: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    depends_on:
+      - auth-service
+      - student-service
+      - teacher-service
+      - course-service
+      - grading-service
+      - notification-service
+    networks:
+      - academic-network
+
+  auth-service:
+    build:
+      context: ./auth-service
+      target: development
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-auth:5432/auth_db
+      - JWT_SECRET=your_jwt_secret_key_here
+      - JWT_EXPIRATION=3600
+    depends_on:
+      - postgres-auth
+      - rabbitmq
+    networks:
+      - academic-network
+
+  student-service:
+    build:
+      context: ./student-service
+      target: development
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./student-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3002
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo-student:27017/student_db
+    depends_on:
+      - mongo-student
+      - rabbitmq
+    networks:
+      - academic-network
+
+  teacher-service:
+    build:
+      context: ./teacher-service
+      target: development
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./teacher-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3003
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo-teacher:27017/teacher_db
+    depends_on:
+      - mongo-teacher
+      - rabbitmq
+    networks:
+      - academic-network
+
+  course-service:
+    build:
+      context: ./course-service
+      target: development
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./course-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3004
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-course:5432/course_db
+    depends_on:
+      - postgres-course
+      - rabbitmq
+    networks:
+      - academic-network
+
+  grading-service:
+    build:
+      context: ./grading-service
+      target: development
+    ports:
+      - "3005:3005"
+    volumes:
+      - ./grading-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3005
+      - NODE_ENV=development
+      - DATABASE_URL=mysql://root:mysql@mysql-grading:3306/grading_db
+    depends_on:
+      - mysql-grading
+      - rabbitmq
+    networks:
+      - academic-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      target: development
+    ports:
+      - "3006:3006"
+    volumes:
+      - ./notification-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3006
+      - NODE_ENV=development
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - rabbitmq
+    networks:
+      - academic-network
+
+  postgres-auth:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=auth_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+    networks:
+      - academic-network
+
+  postgres-course:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=course_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-course-data:/var/lib/postgresql/data
+    networks:
+      - academic-network
+
+  mongo-student:
+    image: mongo:latest
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo-student-data:/data/db
+    networks:
+      - academic-network
+
+  mongo-teacher:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-teacher-data:/data/db
+    networks:
+      - academic-network
+
+  mysql-grading:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql
+      - MYSQL_DATABASE=grading_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-grading-data:/var/lib/mysql
+    networks:
+      - academic-network
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - academic-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - academic-network
+
+  postgres-user:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=user_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-user-data:/var/lib/postgresql/data
+    networks:
+      - academic-network
+
+  user-service:
+    build:
+      context: ./user-service
+      target: development
+    ports:
+      - "3007:3007"
+    volumes:
+      - ./user-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3007
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-user:5432/user_db
+    depends_on:
+      - postgres-user
+      - rabbitmq
+    networks:
+      - academic-network
+
+volumes:
+  postgres-auth-data:
+  postgres-course-data:
+  mongo-student-data:
+  mongo-teacher-data:
+  mysql-grading-data:
+  redis-data:
+  postgres-user-data:
+
+networks:
+  academic-network:
+    driver: bridge
